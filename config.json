@@ -76,7 +76,7 @@
             "buttons": []
         },
         {
-            "description": "About",
+            "description": "Settings",
             "descriptionLocale": {
                 "ru": "Справка",
                 "fr": "À propos",
