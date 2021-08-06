@@ -24,6 +24,13 @@
             });
             var selectedIndex = voiceSelect.selectedIndex < 0 ? 0 : voiceSelect.selectedIndex;
             voiceSelect.innerHTML = '';
+            if (voices.length !== 0) {
+                var option = document.createElement('option');
+                option.textContent = 'Auto';
+                option.setAttribute('data-lang', 'Auto');
+                option.setAttribute('data-name', 'Auto');
+                voiceSelect.appendChild(option);
+            }
             for(i = 0; i < voices.length ; i++) {
                 var option = document.createElement('option');
                 option.textContent = voices[i].name + ' (' + voices[i].lang + ')';

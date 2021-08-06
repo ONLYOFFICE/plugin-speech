@@ -19,7 +19,7 @@
 {
 	var text_init = "";
     var synth     = window.speechSynthesis;
-    var lang_name = "Google UK English Male";
+    var lang_name;
     var pitch     = 1;
     var rate      = 1;
     var voices    = [];
@@ -31,11 +31,59 @@
 			window.Asc.plugin.executeCommand("close", "");
 			return;
 		}
-
 		text_init = text;
-		speak(text_init);
+
+		if (voices.length === 0)
+	        return;
+
+        console.log('Detected Language');
+        guessLanguage.info(text_init, function(info) {
+
+            Run(info[0]);
+        });
+
 		window.Asc.plugin.executeCommand("close", "");
 	};
+
+    function Run(lang)
+    {
+        if (!lang_name || lang_name === "Auto") {
+            var _map   = {};
+            _map["id"] = ["id-ID"];
+            _map["de"] = ["de-DE"];
+            _map["es"] = ["es-ES"];
+            _map["fr"] = ["fr-FR"]; //ua not supported
+            _map["it"] = ["it-IT"];
+            _map["nl"] = ["nl-NL"];
+            _map["pl"] = ["pl-PL"];
+            _map["pt"] = ["pt-BR"];
+            _map["en"] = ["en-GB"];
+            _map["ru"] = ["ru-RU"];
+            _map["ne"] = ["hi-IN"];
+            _map["zh"] = ["zh-CN"];
+            _map["ja"] = ["ja-JP"];
+            _map["ko"] = ["ko-KR"];
+            for (var i = 0; i < voices.length; i++)
+            {
+                if (_map[lang])
+                {
+                    for (var k = 0; k < _map[lang].length; k++)
+                    {
+                        if (voices[i].lang == _map[lang][k])
+                        {
+                            lang_name = voices[i].name;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (!lang_name || lang_name === "Auto") {
+                lang_name = "Google UK English Male";
+            }
+        }
+
+        speak(text_init);
+    };
 
 	function speak(inputTxt){
         if (synth.speaking) {
