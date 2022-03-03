@@ -24,7 +24,7 @@
     var rate      = 1;
     var voices    = [];
 
-	window.Asc.plugin.init = function(text)
+	window.Asc.plugin.init = async function(text)
 	{
 		if ("" == text)
 		{
@@ -37,11 +37,24 @@
 	        return;
 
         console.log('Detected Language');
-        guessLanguage.info(text_init, function(info) {
 
-            Run(info[0]);
-        });
+        var response = await fetch("https://api.translatedlabs.com/language-identifier/identify", {
+            method: 'POST',
+            headers: {
+            'Content-Type': 'application/json;charset=utf-8'
+            },
+            body: JSON.stringify({
+                etnologue: true,
+                text: text,
+                uiLanguage: "en"
+            })
+        })
+        var lang;
+        var result = await response.json();
+        if (result.code)
+            lang = result.code.split("-")[0].toLowerCase();
 
+        Run(lang);
 		window.Asc.plugin.executeCommand("close", "");
 	};
 
@@ -78,7 +91,7 @@
                 }
             }
             if (!lang_name || lang_name === "Auto") {
-                lang_name = "Google UK English Male";
+                lang_name = "Google US English";
             }
         }
 
