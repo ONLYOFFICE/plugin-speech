@@ -7,4 +7,4 @@ License:        CC-BY
 License File:   ResponsiveVoice.license
 
 
-2. translated labs (https://translatedlabs.com/language-identifier) - Automatic language identifier.
+2. guessLanguage to recognize the language. (http://richtr.github.io/guessLanguage.js/)

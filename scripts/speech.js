@@ -23,8 +23,8 @@
     var pitch     = 1;
     var rate      = 1;
     var voices    = [];
-
-	window.Asc.plugin.init = async function(text)
+    var bDefaultLang = false;
+	window.Asc.plugin.init = function(text)
 	{
 		if ("" == text)
 		{
@@ -36,42 +36,38 @@
 		if (voices.length === 0)
 	        return;
 
-        console.log('Detected Language');
-
-        var response = await fetch("https://api.translatedlabs.com/language-identifier/identify", {
-            method: 'POST',
-            headers: {
-            'Content-Type': 'application/json;charset=utf-8'
-            },
-            body: JSON.stringify({
-                etnologue: true,
-                text: text,
-                uiLanguage: "en"
-            })
-        })
-        var lang;
-        var result = await response.json();
-        if (result.code)
-            lang = result.code.split("-")[0].toLowerCase();
-
-        Run(lang);
-		window.Asc.plugin.executeCommand("close", "");
+        guessLanguage.info(text_init, function(info) {
+            Run(info[0]);
+        });
 	};
 
     function Run(lang)
     {
         if (!lang_name || lang_name === "Auto") {
             var _map   = {};
+            // CYRILIC
+            _map["ru"] = ["ru-RU"];
+            // not supported
+            _map["uk"] = ["ru-RU"];
+            _map["kk"] = ["ru-RU"];
+            _map["uz"] = ["ru-RU"];
+            _map["mn"] = ["ru-RU"];
+            _map["sr"] = ["ru-RU"];
+            _map["mk"] = ["ru-RU"];
+            _map["bg"] = ["ru-RU"];
+            _map["ky"] = ["ru-RU"];
+            // not supported
+
             _map["id"] = ["id-ID"];
             _map["de"] = ["de-DE"];
             _map["es"] = ["es-ES"];
-            _map["fr"] = ["fr-FR"]; //ua not supported
+            _map["fr"] = ["fr-FR"];
             _map["it"] = ["it-IT"];
             _map["nl"] = ["nl-NL"];
             _map["pl"] = ["pl-PL"];
             _map["pt"] = ["pt-BR"];
             _map["en"] = ["en-GB"];
-            _map["ru"] = ["ru-RU"];
+
             _map["ne"] = ["hi-IN"];
             _map["zh"] = ["zh-CN"];
             _map["ja"] = ["ja-JP"];
@@ -91,7 +87,8 @@
                 }
             }
             if (!lang_name || lang_name === "Auto") {
-                lang_name = "Google US English";
+                bDefaultLang = true;
+                lang_name = "en-US";
             }
         }
 
@@ -101,18 +98,25 @@
 	function speak(inputTxt){
         if (synth.speaking) {
             console.error('speechSynthesis.speaking');
+            window.Asc.plugin.executeCommand("close", "");
             return;
         }
         var utterThis = new SpeechSynthesisUtterance(inputTxt);
         utterThis.onend = function (event) {
             console.log('SpeechSynthesisUtterance.onend');
+            window.Asc.plugin.executeCommand("close", "");
         }
         utterThis.onerror = function (event) {
             console.error('SpeechSynthesisUtterance.onerror');
+            window.Asc.plugin.executeCommand("close", "");
         }
 
         for(i = 0; i < voices.length ; i++) {
-            if(voices[i].name === lang_name) {
+            if(voices[i].name === lang_name && !bDefaultLang) {
+                utterThis.voice = voices[i];
+                break;
+            }
+            else if (voices[i].lang === lang_name) {
                 utterThis.voice = voices[i];
                 break;
             }
@@ -121,7 +125,7 @@
         utterThis.pitch = pitch;
         utterThis.rate = rate;
         synth.speak(utterThis);
-      };
+    };
 
     $(document).ready(function () {
         function populateVoiceList() {
