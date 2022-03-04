@@ -9,9 +9,8 @@ The Speech plugin is installed by default in cloud and [self-hosted](https://git
 ## How to use
 
 1. Highlight the phrase you want to here.
-2. Open the Plugins tab and press Speech.
-3. Open the plugin settings to select the language for the voiceover (The default setting is auto-recognition mode).
-4. Click on the plugin to sound out the text
+2. Open the plugin settings to select the language for the voiceover (The default setting is auto-recognition mode).
+3. Click on the plugin to sound out the text
 
 ### Note
 
