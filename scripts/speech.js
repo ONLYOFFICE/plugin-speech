@@ -24,6 +24,74 @@
     var rate      = 1;
     var voices    = [];
     var bDefaultLang = false;
+    var langsMap = {
+        "af": "af-ZA",
+        "ar": "ar-SA",
+        "az": "az-AZ",
+        "bg": "bg-BG",
+        "ca": "ca-ES",
+        "ceb": "ceb",
+        "cs": "cs-CZ",
+        "cy": "cy-GB",
+        "da": "da-DK",
+        "de": "de-DE",
+        "en": "en-GB",
+        "es": "es-ES",
+        "et": "et-EE",
+        "eu": "eu-ES",
+        "fa": "fa-IR",
+        "fi": "fi-FI",
+        "fr": "fr-FR",
+        "ha": "ha",
+        "haw": "haw-US",
+        "hi": "hi-IN",
+        "hr": "hr-HR",
+        "hu": "hu-HU",
+        "id": "id-ID",
+        "is": "is-IS",
+        "it": "it-IT",
+        "kk": "kk-KZ",
+        "ky": "ky-KG",
+        "la": "la",
+        "lt": "lt-LT",
+        "lv": "lv-LV",
+        "mk": "mk-MK",
+        "mn": "mn-MN",
+        "ne": "ne-NP",
+        "nl": "nl-NL",
+        "no": "nb-NO",
+        "nr": "nr",
+        "nso": "nso",
+        "pl": "pl-PL",
+        "ps": "ps-AF",
+        "pt": "pt-PT",
+        "pt-br": "pt-BR",
+        "pt-pt": "pt-PT",
+        "ro": "ro-RO",
+        "ru": "ru-RU",
+        "sk": "sk-SK",
+        "sl": "sl-SI",
+        "so": "so-SO",
+        "sq": "sq-AL",
+        "sr": "sr-RS",
+        "ss": "ss",
+        "st": "st",
+        "sv": "sv-SE",
+        "sw": "sw-KE",
+        "tl": "tl",
+        "tlh": "tlh",
+        "tn": "tn",
+        "tr": "tr-TR",
+        "ts": "ts",
+        "uk": "uk-UA",
+        "ur": "ur-PK",
+        "uz": "uz-UZ",
+        "ve": "ve",
+        "vi": "vi-VN",
+        "xh": "xh",
+        "zu": "zu-ZA"
+    }
+    var cyrilic = ["uk", "kk", "uz", "mn", "sr", "ru", "mk", "bg", "ky"]
 	window.Asc.plugin.init = function(text)
 	{
 		if ("" == text)
@@ -44,49 +112,28 @@
     function Run(lang)
     {
         if (!lang_name || lang_name === "Auto") {
-            var _map   = {};
-            // CYRILIC
-            _map["ru"] = ["ru-RU"];
-            // not supported
-            _map["uk"] = ["ru-RU"];
-            _map["kk"] = ["ru-RU"];
-            _map["uz"] = ["ru-RU"];
-            _map["mn"] = ["ru-RU"];
-            _map["sr"] = ["ru-RU"];
-            _map["mk"] = ["ru-RU"];
-            _map["bg"] = ["ru-RU"];
-            _map["ky"] = ["ru-RU"];
-            // not supported
-
-            _map["id"] = ["id-ID"];
-            _map["de"] = ["de-DE"];
-            _map["es"] = ["es-ES"];
-            _map["fr"] = ["fr-FR"];
-            _map["it"] = ["it-IT"];
-            _map["nl"] = ["nl-NL"];
-            _map["pl"] = ["pl-PL"];
-            _map["pt"] = ["pt-BR"];
-            _map["en"] = ["en-GB"];
-
-            _map["ne"] = ["hi-IN"];
-            _map["zh"] = ["zh-CN"];
-            _map["ja"] = ["ja-JP"];
-            _map["ko"] = ["ko-KR"];
-            for (var i = 0; i < voices.length; i++)
-            {
-                if (_map[lang])
-                {
-                    for (var k = 0; k < _map[lang].length; k++)
-                    {
-                        if (voices[i].lang == _map[lang][k])
-                        {
+            for (var i = 0; i < voices.length; i++) {
+                if (langsMap[lang]) {
+                    if (langsMap[lang].search(voices[i].lang) !== -1) {
+                        lang_name = voices[i].name;
+                        break;
+                    }
+                }
+            }
+            if (!lang_name) {
+                for (var i = 0; i < voices.length; i++) {
+                    if (langsMap[lang]) {
+                        if (langsMap[lang].split('-')[0] === voices[i].lang.split('-')[0]) {
                             lang_name = voices[i].name;
                             break;
                         }
                     }
                 }
             }
-            if (!lang_name || lang_name === "Auto") {
+
+            if (!lang_name || lang_name === "Auto" && cyrilic.indexOf(lang) !== -1)
+                lang_name = langsMap["ru"]
+            else if (!lang_name || lang_name === "Auto") {
                 bDefaultLang = true;
                 lang_name = "en-US";
             }
