@@ -131,7 +131,7 @@
                 }
             }
 
-            if (!lang_name || lang_name === "Auto" && cyrilic.indexOf(lang) !== -1)
+            if ((!lang_name || lang_name === "Auto") && cyrilic.indexOf(lang) !== -1)
                 lang_name = langsMap["ru"]
             else if (!lang_name || lang_name === "Auto") {
                 bDefaultLang = true;
