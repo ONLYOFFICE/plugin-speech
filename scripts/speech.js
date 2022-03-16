@@ -17,9 +17,31 @@
  */
 (function(window, undefined)
 {
+    function detectChrome(){
+        var isChromium = window.chrome;
+        var winNav = window.navigator;
+        var vendorName = winNav.vendor;
+        var isOpera = typeof window.opr !== "undefined";
+        var isIEedge = winNav.userAgent.indexOf("Edg") > -1;
+
+        if (isChromium !== null &&
+            typeof isChromium !== "undefined" &&
+            vendorName === "Google Inc." &&
+            isOpera === false &&
+            isIEedge === false)
+            return true;
+
+        return false;
+    };
+
+    var isChrome = detectChrome();
+    var Max_Chars = 32767; // max chars in one sentense
 	var text_init = "";
-    var synth     = window.speechSynthesis;
-    var lang_name;
+    var timer;
+    var isStarted = false;
+    var lang_name, voice;
+    var curText = 0;
+    var allParagraphs = [];
     var pitch     = 1;
     var rate      = 1;
     var voices    = [];
@@ -139,44 +161,141 @@
             }
         }
 
-        speak(text_init);
+        allParagraphs = correctSentLength(text_init.split('\n'));
+        speak();
     };
 
-	function speak(inputTxt){
-        if (synth.speaking) {
+    function correctSentLength(allSentenses) {
+        var aResult = [];
+        var sCurSentense, nTimes, nTempLength, nTempPos;
+        var sTemp = "";
+        
+        for (var nSen = 0; nSen < allSentenses.length; nSen++) {
+            sCurSentense = allSentenses[nSen];
+            nTempLength = 0;
+            if(sCurSentense.length > Max_Chars) {
+                aSplitSentense = [];
+                nTimes =  Math.floor(sCurSentense.length / Max_Chars) + 1;
+
+                for (var nTime = 0; nTime < nTimes; nTime++) {
+                    nTempPos = -1;
+                    sTemp = sCurSentense.slice(nTempLength, Max_Chars * (nTime + 1));
+
+                    if (!sTemp[sTemp.length - 1].match(new RegExp('[.!?;\r ]'))) {
+                        for (nChar = sTemp.length - 1; nChar >= sTemp.length - 150; nChar--) {
+                            if (sTemp[nChar] === " ") {
+                                sTemp = sTemp.slice(0, nChar + 1);
+                                break;
+                            }
+                        }
+                    }
+
+                    nTempLength += sTemp.length;
+                    aResult.push(sTemp);
+                }
+            }
+            else
+                aResult.push(sCurSentense);
+        }
+        return aResult;
+    }
+
+    function resumeInfinity(target) {
+        speechSynthesis.pause()
+        speechSynthesis.resume()
+        timer = setTimeout(function () {
+            resumeInfinity(target)
+        }, 5000)
+    }
+    function clear() {  clearTimeout(timer) }
+
+    function cancel_voice() {
+        for (var i = 0; i < 3; i++)
+            window.speechSynthesis.cancel();
+    }
+
+	function speak() {
+        if (isChrome)
+            window.speechSynthesis.cancel();
+        
+        if (!voice) {
+            for(i = 0; i < voices.length ; i++) {
+                if(voices[i].name === lang_name && !bDefaultLang) {
+                    voice = voices[i];
+                    break;
+                }
+                else if (voices[i].lang === lang_name) {
+                    voice = voices[i];
+                    break;
+                }
+            }
+        }
+        
+        inputTxt = allParagraphs[curText];
+        while (true) {
+            if (inputTxt !== undefined) {
+                if (inputTxt.trim() !== "")
+                    break;
+            }
+            else {
+                window.Asc.plugin.executeCommand("close", "");
+                return;
+            }
+            curText += 1;
+            inputTxt = allParagraphs[curText];
+        }
+        
+        var utterThis = new SpeechSynthesisUtterance(inputTxt);
+        utterThis.voice = voice;
+        utterThis.pitch = pitch;
+        utterThis.rate = rate;
+
+        if (window.speechSynthesis.speaking) {
             console.error('speechSynthesis.speaking');
             window.Asc.plugin.executeCommand("close", "");
             return;
         }
-        var utterThis = new SpeechSynthesisUtterance(inputTxt);
+        
         utterThis.onend = function (event) {
+            if (isChrome) {
+                isStarted = false;
+                clear();
+                window.speechSynthesis.cancel();
+            }
+            
             console.log('SpeechSynthesisUtterance.onend');
-            window.Asc.plugin.executeCommand("close", "");
+            curText += 1;
+            speak();
+        }
+
+        utterThis.onstart = function () {
+            if (isChrome) {
+                isStarted = true;
+                resumeInfinity(this);
+            }
         }
         utterThis.onerror = function (event) {
             console.error('SpeechSynthesisUtterance.onerror');
             window.Asc.plugin.executeCommand("close", "");
         }
+        
+        console.log(utterThis);
+        window.speechSynthesis.speak(utterThis);
 
-        for(i = 0; i < voices.length ; i++) {
-            if(voices[i].name === lang_name && !bDefaultLang) {
-                utterThis.voice = voices[i];
-                break;
-            }
-            else if (voices[i].lang === lang_name) {
-                utterThis.voice = voices[i];
-                break;
-            }
+        // check is started sound
+        if (isChrome) {
+            setTimeout(function() {
+                if (!isStarted) {
+                    window.speechSynthesis.cancel();
+                    curText -= 1;
+                }
+            }, 1500);
         }
-
-        utterThis.pitch = pitch;
-        utterThis.rate = rate;
-        synth.speak(utterThis);
     };
 
     $(document).ready(function () {
         function populateVoiceList() {
-            voices = synth.getVoices().sort(function (a, b) {
+            voices = window.speechSynthesis.getVoices().sort(function (a, b) {
                 const aname = a.name.toUpperCase(), bname = b.name.toUpperCase();
                 if ( aname < bname ) return -1;
                 else if ( aname == bname ) return 0;
