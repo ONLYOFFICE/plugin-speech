@@ -209,14 +209,14 @@
     }
     function clear() {  clearTimeout(timer) }
 
-    function cancel_voice() {
-        for (var i = 0; i < 3; i++)
+    function cancel_voice(nTimes) {
+        for (var i = 0; i < nTimes; i++)
             window.speechSynthesis.cancel();
     }
 
 	function speak() {
         if (isChrome)
-            window.speechSynthesis.cancel();
+            cancel_voice(10);
         
         if (!voice) {
             for(i = 0; i < voices.length ; i++) {
@@ -260,7 +260,7 @@
             if (isChrome) {
                 isStarted = false;
                 clear();
-                window.speechSynthesis.cancel();
+                cancel_voice(10);
             }
             
             console.log('SpeechSynthesisUtterance.onend');
@@ -286,7 +286,7 @@
         if (isChrome) {
             setTimeout(function() {
                 if (!isStarted) {
-                    window.speechSynthesis.cancel();
+                    cancel_voice(10);
                     curText -= 1;
                 }
             }, 1500);
