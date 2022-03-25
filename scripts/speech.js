@@ -206,7 +206,7 @@
     //         resumeInfinity(target)
     //     }, 5000)
     // }
-    function clear() {  timer = null }
+    function clear() {  clearTimeout(timer) }
 
     function cancel_voice() {
         while (window.speechSynthesis.speaking) {
@@ -279,18 +279,20 @@
         }
         
         console.log(utterThis);
-        cancel_voice();
-        window.speechSynthesis.speak(utterThis);
-
-        timer = setTimeout(function() {
-            console.log('Speech dont start speaking, restarting...');
-            curText -= 1;
+        setTimeout(function() {
             cancel_voice();
-        }, 2000);
+            window.speechSynthesis.speak(utterThis);
 
-        // if (isChrome) {
-        //     resumeInfinity(utterThis);
-        // }
+            timer = setTimeout(function() {
+                console.log('Speech dont start speaking, restarting...');
+                curText -= 1;
+                cancel_voice();
+            }, 2000);
+
+            // if (isChrome) {
+            //     resumeInfinity(utterThis);
+            // }
+        }, 0);
     };
 
     $(document).ready(function () {
