@@ -200,13 +200,13 @@
         return aResult;
     }
 
-    function resumeInfinity(target) {
-        speechSynthesis.pause()
-        speechSynthesis.resume()
-        timer = setTimeout(function () {
-            resumeInfinity(target)
-        }, 5000)
-    }
+    // function resumeInfinity(target) {
+    //     speechSynthesis.pause()
+    //     speechSynthesis.resume()
+    //     timer = setTimeout(function () {
+    //         resumeInfinity(target)
+    //     }, 5000)
+    // }
     function clear() {  clearTimeout(timer) }
 
     function cancel_voice() {
@@ -256,7 +256,7 @@
         
         utterThis.onend = function (event) {
             isStarted = false;
-            //clear();
+            clear();
             
             console.log('SpeechSynthesisUtterance.onend');
             curText += 1;
@@ -278,7 +278,7 @@
             cancel_voice();
             window.speechSynthesis.speak(utterThis);
             // check is started sound
-            setTimeout(function() {
+            timer = setTimeout(function() {
                 if (!isStarted) {
                     console.log('Speech dont start speaking, restarting...');
                     curText -= 1;
