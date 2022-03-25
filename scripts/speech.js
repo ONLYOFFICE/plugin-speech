@@ -255,10 +255,8 @@
         }
         
         utterThis.onend = function (event) {
-            if (isChrome) {
-                isStarted = false;
-                //clear();
-            }
+            isStarted = false;
+            //clear();
             
             console.log('SpeechSynthesisUtterance.onend');
             curText += 1;
