@@ -1,5 +1,23 @@
 (function(window, undefined) {
-    var synth       = window.speechSynthesis;
+    function detectChrome(){
+        var isChromium = window.chrome;
+        var winNav = window.navigator;
+        var vendorName = winNav.vendor;
+        var isOpera = typeof window.opr !== "undefined";
+        var isIEedge = winNav.userAgent.indexOf("Edg") > -1;
+
+        if (isChromium !== null &&
+            typeof isChromium !== "undefined" &&
+            vendorName === "Google Inc." &&
+            isOpera === false &&
+            isIEedge === false)
+            return true;
+
+        return false;
+    };
+
+    var isChrome = detectChrome();
+    var synth = window.speechSynthesis;
     var pitch;
     var pitchValue;
     var rate;
@@ -15,13 +33,24 @@
         rate        = document.querySelector('#rate');
         rateValue   = document.querySelector('.rate-value');
         voices      = [];
-        function populateVoiceList() {
+        function initVoices() {
             voices = synth.getVoices().sort(function (a, b) {
                 const aname = a.name.toUpperCase(), bname = b.name.toUpperCase();
                 if ( aname < bname ) return -1;
                 else if ( aname == bname ) return 0;
                 else return +1;
             });
+
+            // remove Google voices (speechSynthesis has bugs with Google voices)
+            if (isChrome){
+                for (var nVoice = 0; nVoice < voices.length; nVoice++) {
+                    if (voices[nVoice].localService === false) {
+                        voices.splice(nVoice, 1);
+                        nVoice -= 1;
+                    }
+                }
+            }
+
             var selectedIndex = voiceSelect.selectedIndex < 0 ? 0 : voiceSelect.selectedIndex;
             voiceSelect.innerHTML = '';
             if (voices.length !== 0) {
@@ -54,9 +83,9 @@
             }
         };
 
-        populateVoiceList();
+        initVoices();
         if (speechSynthesis.onvoiceschanged !== undefined) {
-            speechSynthesis.onvoiceschanged = populateVoiceList;
+            speechSynthesis.onvoiceschanged = initVoices;
         }
 
         pitch.onchange = function() {

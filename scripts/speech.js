@@ -209,15 +209,13 @@
     }
     function clear() {  clearTimeout(timer) }
 
-    function cancel_voice(nTimes) {
-        for (var i = 0; i < nTimes; i++)
+    function cancel_voice() {
+        while (window.speechSynthesis.speaking) {
             window.speechSynthesis.cancel();
+        }
     }
 
 	function speak() {
-        if (isChrome)
-            cancel_voice(10);
-        
         if (!voice) {
             for(i = 0; i < voices.length ; i++) {
                 if(voices[i].name === lang_name && !bDefaultLang) {
@@ -259,8 +257,7 @@
         utterThis.onend = function (event) {
             if (isChrome) {
                 isStarted = false;
-                clear();
-                cancel_voice(10);
+                //clear();
             }
             
             console.log('SpeechSynthesisUtterance.onend');
@@ -268,44 +265,59 @@
             speak();
         }
 
-        utterThis.onstart = function () {
+        utterThis.onstart = function (event) {
             if (isChrome) {
                 isStarted = true;
-                resumeInfinity(this);
+                console.log("On start!")
             }
         }
+
         utterThis.onerror = function (event) {
             console.error('SpeechSynthesisUtterance.onerror');
             window.Asc.plugin.executeCommand("close", "");
         }
         
         console.log(utterThis);
-        window.speechSynthesis.speak(utterThis);
-
-        // check is started sound
-        if (isChrome) {
+        setTimeout(function() {
+            cancel_voice();
+            window.speechSynthesis.speak(utterThis);
+            // check is started sound
             setTimeout(function() {
                 if (!isStarted) {
-                    cancel_voice(10);
+                    console.log('Speech dont start speaking, restarting...');
                     curText -= 1;
+                    cancel_voice();
                 }
-            }, 1500);
-        }
+            }, 2000);
+
+            // if (isChrome) {
+            //     resumeInfinity(utterThis);
+            // }
+        }, 0);
     };
 
     $(document).ready(function () {
-        function populateVoiceList() {
+        function initVoices() {
             voices = window.speechSynthesis.getVoices().sort(function (a, b) {
                 const aname = a.name.toUpperCase(), bname = b.name.toUpperCase();
                 if ( aname < bname ) return -1;
                 else if ( aname == bname ) return 0;
                 else return +1;
             });
+            // remove Google voices (speechSynthesis has bugs with Google voices)
+            if (isChrome){
+                for (var nVoice = 0; nVoice < voices.length; nVoice++) {
+                    if (voices[nVoice].localService === false) {
+                        voices.splice(nVoice, 1);
+                        nVoice -= 1;
+                    }
+                }
+            }
         };
 
-        populateVoiceList();
+        initVoices();
         if (speechSynthesis.onvoiceschanged !== undefined) {
-            speechSynthesis.onvoiceschanged = populateVoiceList;
+            speechSynthesis.onvoiceschanged = initVoices;
         }
 
         var saved_pitch = localStorage.getItem("plugin-speech-pitch");
