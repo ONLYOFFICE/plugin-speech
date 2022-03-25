@@ -38,7 +38,6 @@
     var Max_Chars = 32767; // max chars in one sentense
 	var text_init = "";
     var timer;
-    var isStarted = false;
     var lang_name, voice;
     var curText = 0;
     var allParagraphs = [];
@@ -207,7 +206,7 @@
     //         resumeInfinity(target)
     //     }, 5000)
     // }
-    function clear() {  clearTimeout(timer) }
+    function clear() {  timer = null }
 
     function cancel_voice() {
         while (window.speechSynthesis.speaking) {
@@ -236,6 +235,7 @@
                     break;
             }
             else {
+                speechSynthesis.cancel();
                 window.Asc.plugin.executeCommand("close", "");
                 return;
             }
@@ -250,12 +250,12 @@
 
         if (window.speechSynthesis.speaking) {
             console.error('speechSynthesis.speaking');
+            speechSynthesis.cancel();
             window.Asc.plugin.executeCommand("close", "");
             return;
         }
         
         utterThis.onend = function (event) {
-            isStarted = false;
             clear();
             
             console.log('SpeechSynthesisUtterance.onend');
@@ -264,32 +264,33 @@
         }
 
         utterThis.onstart = function (event) {
-            isStarted = true;
+            clear();
             console.log("On start!")
+        }
+
+        utterThis.onboundary = function() {
+            clear();
         }
 
         utterThis.onerror = function (event) {
             console.error('SpeechSynthesisUtterance.onerror');
+            speechSynthesis.cancel();
             window.Asc.plugin.executeCommand("close", "");
         }
         
         console.log(utterThis);
-        setTimeout(function() {
-            cancel_voice();
-            window.speechSynthesis.speak(utterThis);
-            // check is started sound
-            timer = setTimeout(function() {
-                if (!isStarted) {
-                    console.log('Speech dont start speaking, restarting...');
-                    curText -= 1;
-                    cancel_voice();
-                }
-            }, 2000);
+        cancel_voice();
+        window.speechSynthesis.speak(utterThis);
 
-            // if (isChrome) {
-            //     resumeInfinity(utterThis);
-            // }
-        }, 0);
+        timer = setTimeout(function() {
+            console.log('Speech dont start speaking, restarting...');
+            curText -= 1;
+            cancel_voice();
+        }, 2000);
+
+        // if (isChrome) {
+        //     resumeInfinity(utterThis);
+        // }
     };
 
     $(document).ready(function () {
@@ -333,6 +334,7 @@
 		if (-1 == id)
 			responsiveVoice.cancel();
 
+        speechSynthesis.cancel();
 		this.executeCommand("close", "");
 	};
 
