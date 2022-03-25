@@ -266,10 +266,8 @@
         }
 
         utterThis.onstart = function (event) {
-            if (isChrome) {
-                isStarted = true;
-                console.log("On start!")
-            }
+            isStarted = true;
+            console.log("On start!")
         }
 
         utterThis.onerror = function (event) {
