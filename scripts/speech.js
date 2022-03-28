@@ -162,7 +162,25 @@
 
         allParagraphs = correctSentLength(text_init.split('\n'));
         speak();
-    };
+    }
+
+    function initVoices() {
+        voices = window.speechSynthesis.getVoices().sort(function (a, b) {
+            const aname = a.name.toUpperCase(), bname = b.name.toUpperCase();
+            if ( aname < bname ) return -1;
+            else if ( aname == bname ) return 0;
+            else return +1;
+        });
+        // remove Google voices (speechSynthesis has bugs with Google voices)
+        if (isChrome){
+            for (var nVoice = 0; nVoice < voices.length; nVoice++) {
+                if (voices[nVoice].localService === false) {
+                    voices.splice(nVoice, 1);
+                    nVoice -= 1;
+                }
+            }
+        }
+    }
 
     function correctSentLength(allSentenses) {
         var aResult = [];
@@ -199,13 +217,6 @@
         return aResult;
     }
 
-    // function resumeInfinity(target) {
-    //     speechSynthesis.pause()
-    //     speechSynthesis.resume()
-    //     timer = setTimeout(function () {
-    //         resumeInfinity(target)
-    //     }, 5000)
-    // }
     function clear() {  clearTimeout(timer) }
 
     function cancel_voice() {
@@ -255,7 +266,7 @@
             return;
         }
         
-        utterThis.onend = function (event) {
+        utterThis.onend = function () {
             clear();
             
             console.log('SpeechSynthesisUtterance.onend');
@@ -263,7 +274,7 @@
             speak();
         }
 
-        utterThis.onstart = function (event) {
+        utterThis.onstart = function () {
             clear();
             console.log("On start!")
         }
@@ -272,7 +283,7 @@
             clear();
         }
 
-        utterThis.onerror = function (event) {
+        utterThis.onerror = function () {
             console.error('SpeechSynthesisUtterance.onerror');
             speechSynthesis.cancel();
             window.Asc.plugin.executeCommand("close", "");
@@ -287,33 +298,12 @@
                 console.log('Speech dont start speaking, restarting...');
                 curText -= 1;
                 cancel_voice();
-            }, 2000);
+            }, 3000);
 
-            // if (isChrome) {
-            //     resumeInfinity(utterThis);
-            // }
         }, 0);
-    };
+    }
 
     $(document).ready(function () {
-        function initVoices() {
-            voices = window.speechSynthesis.getVoices().sort(function (a, b) {
-                const aname = a.name.toUpperCase(), bname = b.name.toUpperCase();
-                if ( aname < bname ) return -1;
-                else if ( aname == bname ) return 0;
-                else return +1;
-            });
-            // remove Google voices (speechSynthesis has bugs with Google voices)
-            if (isChrome){
-                for (var nVoice = 0; nVoice < voices.length; nVoice++) {
-                    if (voices[nVoice].localService === false) {
-                        voices.splice(nVoice, 1);
-                        nVoice -= 1;
-                    }
-                }
-            }
-        };
-
         initVoices();
         if (speechSynthesis.onvoiceschanged !== undefined) {
             speechSynthesis.onvoiceschanged = initVoices;
@@ -331,6 +321,7 @@
         if (saved_lang)
             lang_name = saved_lang;
     });
+    
 	window.Asc.plugin.button = function(id)
 	{
 		if (-1 == id)
