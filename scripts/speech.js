@@ -39,7 +39,7 @@
 	var text_init = "";
     var timer;
     var lang_name, voice;
-    var curText = 0;
+    var curTextIdx = 0;
     var allParagraphs = [];
     var pitch     = 1;
     var rate      = 1;
@@ -122,8 +122,11 @@
 		}
 		text_init = text;
 
-		if (voices.length === 0)
-	        return;
+		if (!window.speechSynthesis || voices.length === 0)
+        {
+            window.Asc.plugin.executeCommand("close", "");
+            return;
+        }
 
         guessLanguage.info(text_init, function(info) {
             Run(info[0]);
@@ -160,6 +163,17 @@
             }
         }
 
+        for(i = 0; i < voices.length ; i++) {
+            if(voices[i].name === lang_name && !bDefaultLang) {
+                voice = voices[i];
+                break;
+            }
+            else if (voices[i].lang === lang_name) {
+                voice = voices[i];
+                break;
+            }
+        }
+
         allParagraphs = correctSentLength(text_init.split('\n'));
         speak();
     }
@@ -171,18 +185,12 @@
             else if ( aname == bname ) return 0;
             else return +1;
         });
-        // remove Google voices (speechSynthesis has bugs with Google voices)
-        if (isChrome){
-            for (var nVoice = 0; nVoice < voices.length; nVoice++) {
-                if (voices[nVoice].localService === false) {
-                    voices.splice(nVoice, 1);
-                    nVoice -= 1;
-                }
-            }
-        }
     }
 
     function correctSentLength(allSentenses) {
+        if (isChrome && !voice.localService)
+            Max_Chars = 100;
+
         var aResult = [];
         var sCurSentense, nTimes, nTempLength, nTempPos;
         var sTemp = "";
@@ -197,14 +205,13 @@
                 for (var nTime = 0; nTime < nTimes; nTime++) {
                     nTempPos = -1;
                     sTemp = sCurSentense.slice(nTempLength, Max_Chars * (nTime + 1));
+                    if (sTemp === "")
+                        break;
 
-                    if (!sTemp[sTemp.length - 1].match(new RegExp('[.!?;\r ]'))) {
-                        for (nChar = sTemp.length - 1; nChar >= sTemp.length - 150; nChar--) {
-                            if (sTemp[nChar] === " ") {
-                                sTemp = sTemp.slice(0, nChar + 1);
-                                break;
-                            }
-                        }
+                    if (!sTemp[sTemp.length - 1].match(new RegExp('[.!?,;\r- ]'))) {
+                        var aMatches = Array.from(sTemp.matchAll(/[.!?;,\r-]/g)) || Array.from(sTemp.matchAll(/' '/g));
+                        if (aMatches.length !== 0)
+                            sTemp = sTemp.slice(0, aMatches[aMatches.length - 1].index + 1);
                     }
 
                     nTempLength += sTemp.length;
@@ -219,27 +226,8 @@
 
     function clear() {  clearTimeout(timer) }
 
-    function cancel_voice() {
-        while (window.speechSynthesis.speaking) {
-            window.speechSynthesis.cancel();
-        }
-    }
-
 	function speak() {
-        if (!voice) {
-            for(i = 0; i < voices.length ; i++) {
-                if(voices[i].name === lang_name && !bDefaultLang) {
-                    voice = voices[i];
-                    break;
-                }
-                else if (voices[i].lang === lang_name) {
-                    voice = voices[i];
-                    break;
-                }
-            }
-        }
-        
-        inputTxt = allParagraphs[curText];
+        inputTxt = allParagraphs[curTextIdx];
         while (true) {
             if (inputTxt !== undefined) {
                 if (inputTxt.trim() !== "")
@@ -250,8 +238,8 @@
                 window.Asc.plugin.executeCommand("close", "");
                 return;
             }
-            curText += 1;
-            inputTxt = allParagraphs[curText];
+            curTextIdx += 1;
+            inputTxt = allParagraphs[curTextIdx];
         }
         
         var utterThis = new SpeechSynthesisUtterance(inputTxt);
@@ -270,7 +258,7 @@
             clear();
             
             console.log('SpeechSynthesisUtterance.onend');
-            curText += 1;
+            curTextIdx += 1;
             speak();
         }
 
@@ -290,17 +278,16 @@
         }
         
         console.log(utterThis);
-        setTimeout(function() {
-            cancel_voice();
-            window.speechSynthesis.speak(utterThis);
+		window.speechSynthesis.cancel();
+		setTimeout(function() {
+			window.speechSynthesis.speak(utterThis);
+		}, 50);
 
-            timer = setTimeout(function() {
-                console.log('Speech dont start speaking, restarting...');
-                curText -= 1;
-                cancel_voice();
-            }, 3000);
-
-        }, 0);
+		timer = setTimeout(function() {
+			console.log('Speech dont start speaking, restarting...');
+			curTextIdx -= 1;
+			window.speechSynthesis.cancel();
+		}, 3000);
     }
 
     $(document).ready(function () {
