@@ -78,10 +78,10 @@
         {
             "description": "Settings",
             "descriptionLocale": {
-                "ru": "Справка",
-                "fr": "À propos",
-                "es": "Sobre programa",
-                "de": "Über"
+                "ru": "Настройки",
+                "fr": "Paramètres",
+                "es": "Configuración",
+                "de": "Einstellungen"
             },
             "url": "settings.html",
 
