@@ -37,7 +37,7 @@
     var isChrome = detectChrome();
     var Max_Chars = 32767; // max chars in one sentense
 	var text_init = "";
-    var timer;
+    var timer, timer2;
     var lang_name, voice;
     var curTextIdx = 0;
     var allParagraphs = [];
@@ -263,6 +263,15 @@
     }
 
     function clear() {  clearTimeout(timer) }
+    function clear2() {  clearTimeout(timer2) }
+
+    function resumeInfinity(target) {
+        speechSynthesis.pause()
+        speechSynthesis.resume()
+        timer2 = setTimeout(function () {
+            resumeInfinity(target)
+        }, 3000)
+    }
 
 	function speak() {
         inputTxt = allParagraphs[curTextIdx];
@@ -294,7 +303,8 @@
         
         utterThis.onend = function () {
             clear();
-            
+            clear2();
+
             console.log('SpeechSynthesisUtterance.onend');
             curTextIdx += 1;
             speak();
@@ -319,6 +329,8 @@
 		window.speechSynthesis.cancel();
 		setTimeout(function() {
 			window.speechSynthesis.speak(utterThis);
+            if (isChrome && !voice.localService)
+                resumeInfinity(utterThis);
 		}, 50);
 
 		timer = setTimeout(function() {
