@@ -246,8 +246,11 @@
                     if (sTemp === "")
                         break;
 
-                    if (!sTemp[sTemp.length - 1].match(new RegExp('[.!?,;\r- ]'))) {
-                        var aMatches = Array.from(sTemp.matchAll(/[.!?;,\r-]/g)) || Array.from(sTemp.matchAll(/' '/g));
+                    if (!sTemp[sTemp.length - 1].match(new RegExp(/[.!?,;\r- ]/))) {
+                        var aMatches = Array.from(sTemp.matchAll(/[.!?;,\r-]/g));
+                        if (aMatches.length === 0)
+                            aMatches = Array.from(sTemp.matchAll(' '));
+
                         if (aMatches.length !== 0)
                             sTemp = sTemp.slice(0, aMatches[aMatches.length - 1].index + 1);
                     }
