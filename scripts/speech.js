@@ -45,6 +45,7 @@
     var rate      = 1;
     var voices    = [];
     var bDefaultLang = false;
+    var aAllUtterance = [];
     var langsMap = {
         "ab": "ab",
         "af": "af-ZA",
@@ -213,6 +214,7 @@
         }
 
         allParagraphs = correctSentLength(text_init.split('\n'));
+        createAllUtterance()
         speak();
     }
 
@@ -246,8 +248,8 @@
                     if (sTemp === "")
                         break;
 
-                    if (!sTemp[sTemp.length - 1].match(new RegExp(/[.!?,;\r- ]/))) {
-                        var aMatches = Array.from(sTemp.matchAll(/[.!?;,\r-]/g));
+                    if (!sTemp[sTemp.length - 1].match(new RegExp(/[.!?,;\r ]/))) {
+                        var aMatches = Array.from(sTemp.matchAll(/[.!?;,\r]/g));
                         if (aMatches.length === 0)
                             aMatches = Array.from(sTemp.matchAll(' '));
 
@@ -256,46 +258,63 @@
                     }
 
                     nTempLength += sTemp.length;
-                    aResult.push(sTemp);
+                    sTemp.trim() !== "" && aResult.push(sTemp);
                 }
             }
             else
-                aResult.push(sCurSentense);
+                sCurSentense.trim() !== "" && aResult.push(sCurSentense);
         }
         return aResult;
     }
 
-    function clear() {  clearTimeout(timer) }
-    function clear2() {  clearTimeout(timer2) }
-
-    function resumeInfinity(target) {
-        speechSynthesis.pause()
-        speechSynthesis.resume()
+    function resumeInfinity() {
+        speechSynthesis.pause();
+        speechSynthesis.resume();
+        speechSynthesis.resume();
+        speechSynthesis.resume();
         timer2 = setTimeout(function () {
-            resumeInfinity(target)
+            resumeInfinity()
         }, 3000)
     }
 
-	function speak() {
-        inputTxt = allParagraphs[curTextIdx];
-        while (true) {
-            if (inputTxt !== undefined) {
-                if (inputTxt.trim() !== "")
-                    break;
-            }
-            else {
-                speechSynthesis.cancel();
-                window.Asc.plugin.executeCommand("close", "");
-                return;
-            }
-            curTextIdx += 1;
-            inputTxt = allParagraphs[curTextIdx];
+    function createAllUtterance() {
+        var oUtterance;
+        for (var nTxt = 0; nTxt < allParagraphs.length; nTxt++) {
+            if (allParagraphs[nTxt].trim() === "")
+                continue;
+            
+            oUtterance = new SpeechSynthesisUtterance(allParagraphs[nTxt]);
+            oUtterance.voice = voice;
+            oUtterance.pitch = pitch;
+            oUtterance.rate = rate;
+            oUtterance.onend = onEnd;
+            oUtterance.onstart = onStart;
+            oUtterance.onerror = onError;
+            oUtterance.idx = nTxt;
+
+            aAllUtterance.push(oUtterance);
         }
-        
-        var utterThis = new SpeechSynthesisUtterance(inputTxt);
-        utterThis.voice = voice;
-        utterThis.pitch = pitch;
-        utterThis.rate = rate;
+    }
+
+    function onStart() {
+        console.log(this);
+    }
+    function onEnd() {
+        console.log('SpeechSynthesisUtterance.onend');
+        if (this.idx === aAllUtterance.length - 1) {
+            speechSynthesis.cancel();
+            window.Asc.plugin.executeCommand("close", "");
+        }
+    }
+    function onError () {
+        console.error('SpeechSynthesisUtterance.onerror');
+        speechSynthesis.cancel();
+        window.Asc.plugin.executeCommand("close", "");
+    }
+
+	function speak() {
+        var utterThis;
+        speechSynthesis.cancel();
 
         if (window.speechSynthesis.speaking) {
             console.error('speechSynthesis.speaking');
@@ -304,43 +323,12 @@
             return;
         }
         
-        utterThis.onend = function () {
-            clear();
-            clear2();
-
-            console.log('SpeechSynthesisUtterance.onend');
-            curTextIdx += 1;
-            speak();
-        }
-
-        utterThis.onstart = function () {
-            clear();
-            console.log("On start!")
-        }
-
-        utterThis.onboundary = function() {
-            clear();
-        }
-
-        utterThis.onerror = function () {
-            console.error('SpeechSynthesisUtterance.onerror');
-            speechSynthesis.cancel();
-            window.Asc.plugin.executeCommand("close", "");
-        }
-        
         console.log(utterThis);
-		window.speechSynthesis.cancel();
-		setTimeout(function() {
-			window.speechSynthesis.speak(utterThis);
-            if (isChrome && !voice.localService)
-                resumeInfinity(utterThis);
-		}, 50);
+        for (var nUtter = 0; nUtter < aAllUtterance.length; nUtter++)
+            window.speechSynthesis.speak(aAllUtterance[nUtter]);
 
-		timer = setTimeout(function() {
-			console.log('Speech dont start speaking, restarting...');
-			curTextIdx -= 1;
-			window.speechSynthesis.cancel();
-		}, 3000);
+        if (isChrome && !voice.localService)
+            resumeInfinity();
     }
 
     $(document).ready(function () {
