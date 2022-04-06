@@ -371,4 +371,8 @@
 		this.executeCommand("close", "");
 	};
 
+    window.onunload = function()
+    {
+        speechSynthesis.cancel();
+    };
 })(window, undefined);
