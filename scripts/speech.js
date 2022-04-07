@@ -270,13 +270,12 @@
     function resumeInfinity() {
         speechSynthesis.pause();
         speechSynthesis.resume();
-        speechSynthesis.resume();
-        speechSynthesis.resume();
         timer2 = setTimeout(function () {
             resumeInfinity()
         }, 3000)
     }
-
+    function clear() {  clearTimeout(timer) }
+    
     function createAllUtterance() {
         var oUtterance;
         for (var nTxt = 0; nTxt < allParagraphs.length; nTxt++) {
@@ -305,6 +304,11 @@
             speechSynthesis.cancel();
             window.Asc.plugin.executeCommand("close", "");
         }
+        else if (this.idx === curTextIdx + 9) {
+            curTextIdx += 10;
+            clear();
+            speak();
+        }
     }
     function onError () {
         console.error('SpeechSynthesisUtterance.onerror');
@@ -324,7 +328,7 @@
         }
         
         console.log(utterThis);
-        for (var nUtter = 0; nUtter < aAllUtterance.length; nUtter++)
+        for (var nUtter = curTextIdx; nUtter < curTextIdx + 10; nUtter++)
             window.speechSynthesis.speak(aAllUtterance[nUtter]);
 
         if (isChrome && !voice.localService)
