@@ -37,7 +37,7 @@
     var isChrome = detectChrome();
     var Max_Chars = 32767; // max chars in one sentense
 	var text_init = "";
-    var timer, timer2;
+    var timer;
     var lang_name, voice;
     var curTextIdx = 0;
     var allParagraphs = [];
@@ -270,7 +270,7 @@
     function resumeInfinity() {
         speechSynthesis.pause();
         speechSynthesis.resume();
-        timer2 = setTimeout(function () {
+        timer = setTimeout(function () {
             resumeInfinity()
         }, 3000)
     }
