@@ -38,7 +38,7 @@
     var Max_Chars = 32767; // max chars in one sentense
 	var text_init = "";
     var timer;
-    var lang_name, voice;
+    var voice_name, oMainVoice;
     var curTextIdx = 0;
     var allParagraphs = [];
     var pitch     = 1;
@@ -173,53 +173,63 @@
 	};
 
     function FindVoice(lang, bSkipGoogle) {
-        if (!lang_name || lang_name === "Auto") {
+        if (!voice_name || voice_name === "Auto") {
             for (var i = 0; i < voices.length; i++) {
                 if (langsMap[lang]) {
                     if (langsMap[lang].search(voices[i].lang) !== -1) {
                         if (bSkipGoogle && voices[i].name.search('Google') !== -1)
                             continue;
 
-                        lang_name = voices[i].name;
+                        voice_name = voices[i].name;
+                        oMainVoice = voices[i];
                         break;
                     }
                 }
             }
-            if (!lang_name) {
+            if (!voice_name) {
                 for (var i = 0; i < voices.length; i++) {
                     if (langsMap[lang]) {
                         if (langsMap[lang].split('-')[0] === voices[i].lang.split('-')[0]) {
                             if (bSkipGoogle && voices[i].name.search('Google') !== -1)
                                 continue;
 
-                            lang_name = voices[i].name;
+                            voice_name = voices[i].name;
+                            oMainVoice = voices[i];
                             break;
                         }
                     }
                 }
             }
 
-            if ((!lang_name || lang_name === "Auto") && cyrilic.indexOf(lang) !== -1)
-                lang_name = langsMap["ru"]
-            else if (!lang_name || lang_name === "Auto") {
+            if (!oMainVoice && bSkipGoogle)
+                FindVoice(lang, false);
+            if (oMainVoice)
+                return true;
+
+            if ((!voice_name || voice_name === "Auto") && cyrilic.indexOf(lang) !== -1) {
+                voice_name = langsMap["ru"];
+                bSkipGoogle = true;
+            }
+            else if (!voice_name || voice_name === "Auto") {
+                bSkipGoogle = true;
                 bDefaultLang = true;
-                lang_name = "en-US";
+                voice_name = "en-US";
             }
         }
 
         for(i = 0; i < voices.length ; i++) {
-            if(voices[i].name === lang_name && !bDefaultLang) {
+            if(voices[i].name === voice_name && !bDefaultLang) {
                 if (bSkipGoogle && voices[i].name.search('Google') !== -1)
                     continue;
 
-                voice = voices[i];
+                oMainVoice = voices[i];
                 break;
             }
-            else if (voices[i].lang === lang_name) {
+            else if (voices[i].lang === voice_name) {
                 if (bSkipGoogle && voices[i].name.search('Google') !== -1)
                     continue;
 
-                voice = voices[i];
+                oMainVoice = voices[i];
                 break;
             }
         }
@@ -228,11 +238,15 @@
     function Run(lang)
     {
         FindVoice(lang, true);
-        if (!voice)
+        if (!oMainVoice)
             FindVoice(lang, false);
-              
+        if (!oMainVoice) {
+            window.Asc.plugin.executeCommand("close", "");
+            return false;
+        }
+            
         allParagraphs = correctSentLength(text_init.split('\n'));
-        createAllUtterance()
+        createAllUtterance();
         speak();
     }
 
@@ -246,7 +260,7 @@
     }
 
     function correctSentLength(allSentenses) {
-        if (isChrome && !voice.localService)
+        if (isChrome && !oMainVoice.localService)
             Max_Chars = 100;
 
         var aResult = [];
@@ -301,7 +315,7 @@
                 continue;
             
             oUtterance = new SpeechSynthesisUtterance(allParagraphs[nTxt]);
-            oUtterance.voice = voice;
+            oUtterance.voice = oMainVoice;
             oUtterance.pitch = pitch;
             oUtterance.rate = rate;
             oUtterance.onend = onEnd;
@@ -322,7 +336,7 @@
             speechSynthesis.cancel();
             window.Asc.plugin.executeCommand("close", "");
         }
-        else if (this.idx === curTextIdx + 9 && isChrome && !voice.localService) {
+        else if (this.idx === curTextIdx + 9 && isChrome && !oMainVoice.localService) {
             curTextIdx += 10;
             clear();
             speak();
@@ -347,7 +361,7 @@
         
         console.log(utterThis);
         
-        if (isChrome && !voice.localService) {
+        if (isChrome && !oMainVoice.localService) {
             for (var nUtter = curTextIdx; nUtter < curTextIdx + 10 && nUtter < aAllUtterance.length; nUtter++) {
                 window.speechSynthesis.speak(aAllUtterance[nUtter]);
             }
@@ -375,9 +389,9 @@
         if (saved_rate)
             rate = saved_rate;
 
-        var saved_lang = localStorage.getItem("plugin-speech-lang-name");
-        if (saved_lang)
-            lang_name = saved_lang;
+        var saved_voice = localStorage.getItem("plugin-speech-voice-name");
+        if (saved_voice)
+            voice_name = saved_voice;
     });
     
 	window.Asc.plugin.button = function(id)

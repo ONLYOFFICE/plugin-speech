@@ -1,22 +1,4 @@
 (function(window, undefined) {
-    function detectChrome(){
-        var isChromium = window.chrome;
-        var winNav = window.navigator;
-        var vendorName = winNav.vendor;
-        var isOpera = typeof window.opr !== "undefined";
-        var isIEedge = winNav.userAgent.indexOf("Edg") > -1;
-
-        if (isChromium !== null &&
-            typeof isChromium !== "undefined" &&
-            vendorName === "Google Inc." &&
-            isOpera === false &&
-            isIEedge === false)
-            return true;
-
-        return false;
-    };
-
-    var isChrome = detectChrome();
     var synth = window.speechSynthesis;
     var pitch;
     var pitchValue;
@@ -113,7 +95,7 @@
     {
         localStorage.setItem("plugin-speech-pitch", pitch.value);
         localStorage.setItem("plugin-speech-rate", rate.value);
-        localStorage.setItem("plugin-speech-lang-name", voiceSelect.selectedOptions[0].getAttribute('data-name'));
+        localStorage.setItem("plugin-speech-voice-name", voiceSelect.selectedOptions[0].getAttribute('data-name'));
         localStorage.setItem("plugin-speech-lang-val", $(voiceSelect).val());
 
         this.executeCommand("close", "");
