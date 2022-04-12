@@ -172,12 +172,14 @@
         });
 	};
 
-    function Run(lang)
-    {
+    function FindVoice(lang, bSkipGoogle) {
         if (!lang_name || lang_name === "Auto") {
             for (var i = 0; i < voices.length; i++) {
                 if (langsMap[lang]) {
                     if (langsMap[lang].search(voices[i].lang) !== -1) {
+                        if (bSkipGoogle && voices[i].name.search('Google') !== -1)
+                            continue;
+
                         lang_name = voices[i].name;
                         break;
                     }
@@ -187,6 +189,9 @@
                 for (var i = 0; i < voices.length; i++) {
                     if (langsMap[lang]) {
                         if (langsMap[lang].split('-')[0] === voices[i].lang.split('-')[0]) {
+                            if (bSkipGoogle && voices[i].name.search('Google') !== -1)
+                                continue;
+
                             lang_name = voices[i].name;
                             break;
                         }
@@ -204,15 +209,28 @@
 
         for(i = 0; i < voices.length ; i++) {
             if(voices[i].name === lang_name && !bDefaultLang) {
+                if (bSkipGoogle && voices[i].name.search('Google') !== -1)
+                    continue;
+
                 voice = voices[i];
                 break;
             }
             else if (voices[i].lang === lang_name) {
+                if (bSkipGoogle && voices[i].name.search('Google') !== -1)
+                    continue;
+
                 voice = voices[i];
                 break;
             }
         }
+    }
 
+    function Run(lang)
+    {
+        FindVoice(lang, true);
+        if (!voice)
+            FindVoice(lang, false);
+              
         allParagraphs = correctSentLength(text_init.split('\n'));
         createAllUtterance()
         speak();
@@ -304,7 +322,7 @@
             speechSynthesis.cancel();
             window.Asc.plugin.executeCommand("close", "");
         }
-        else if (this.idx === curTextIdx + 9) {
+        else if (this.idx === curTextIdx + 9 && isChrome && !voice.localService) {
             curTextIdx += 10;
             clear();
             speak();
@@ -328,11 +346,19 @@
         }
         
         console.log(utterThis);
-        for (var nUtter = curTextIdx; nUtter < curTextIdx + 10; nUtter++)
-            window.speechSynthesis.speak(aAllUtterance[nUtter]);
+        
+        if (isChrome && !voice.localService) {
+            for (var nUtter = curTextIdx; nUtter < curTextIdx + 10 && nUtter < aAllUtterance.length; nUtter++) {
+                window.speechSynthesis.speak(aAllUtterance[nUtter]);
+            }
 
-        if (isChrome && !voice.localService)
             resumeInfinity();
+        }
+        else {
+            for (var nUtter = curTextIdx; nUtter < aAllUtterance.length; nUtter++) {
+                window.speechSynthesis.speak(aAllUtterance[nUtter]);
+            }
+        }
     }
 
     $(document).ready(function () {
